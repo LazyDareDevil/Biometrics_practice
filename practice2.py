@@ -9,6 +9,8 @@ import imutils
 import cv2
 import os
 import sys
+from mirror_symmetry import detecting_mirrorLine
+import numpy as np
 
 class PhotoBoothApp:
 	def __init__(self):
@@ -64,8 +66,8 @@ class PhotoBoothApp:
 	def videoLoop(self):
 		try:
 			while not self.stopEvent.is_set():
-				_, self.frame = self.cap.read()
-				self.frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
+				_, frame = self.cap.read()
+				self.frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 				self.image = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
 				self.method = self.list.curselection()
 				if len(self.method) > 0:
@@ -79,7 +81,7 @@ class PhotoBoothApp:
 							else:
 								top_left = max_loc
 							w, h = self.temp_image.shape
-							bottom_right = (top_left[0] + w, top_left[1] + h)
+							bottom_right = (top_left[0] + h, top_left[1] + w)
 							cv2.rectangle(self.frame, top_left, bottom_right, (255, 0, 0), 2)
 					else:
 						faces = self.face_cascade.detectMultiScale(self.image, 1.3, 5)
@@ -87,8 +89,21 @@ class PhotoBoothApp:
 							self.frame = cv2.rectangle(self.frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 							# roi_gray = self.image[y : y + h, x : x + w]
 							eyes = self.eye_cascade.detectMultiScale(self.image)
-							for (ex, ey, ew, eh) in eyes:
+							for (ex, ey, ew, eh) in eyes[:2]:
 								cv2.rectangle(self.frame, (ex, ey), (ex+ew, ey+eh), (0,255,0), 2)
+							try:
+								cv2.imwrite("data/aaa.jpg", self.image[y:y + h, x:x + w])
+								# print(x, " ", x+ w, " ", y, " ", y + h)
+								r, theta = detecting_mirrorLine(self.image[y:y + h, x:x + w])
+								for m in range(len(self.frame)): 
+									try:
+										n = int((r-m*np.sin(theta))/np.cos(theta))
+										self.frame[m+y][n+x] = 255
+										self.frame[m+y][n+x+1] = 255
+									except IndexError:
+										continue
+							except Exception:
+								continue
 				image = Image.fromarray(self.frame)
 				image = ImageTk.PhotoImage(image)
 
