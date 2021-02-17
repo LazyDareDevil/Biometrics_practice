@@ -129,4 +129,7 @@ dmypy.json
 .pyre/
 
 practice2/data
+practice2/__pycache__
+practice3/data
+practice3/__pycache__
 test.py
