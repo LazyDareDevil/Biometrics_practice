@@ -87,23 +87,19 @@ class PhotoBoothApp:
 						faces = self.face_cascade.detectMultiScale(self.image, 1.3, 5)
 						for (x, y, w, h) in faces:
 							self.frame = cv2.rectangle(self.frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-							# roi_gray = self.image[y : y + h, x : x + w]
 							eyes = self.eye_cascade.detectMultiScale(self.image)
-							for (ex, ey, ew, eh) in eyes[:2]:
-								cv2.rectangle(self.frame, (ex, ey), (ex+ew, ey+eh), (0,255,0), 2)
 							try:
-								cv2.imwrite("data/aaa.jpg", self.image[y:y + h, x:x + w])
+								cv2.imwrite("data/face.jpg", self.image[y:y + h, x:x + w])
 								# print(x, " ", x+ w, " ", y, " ", y + h)
 								r, theta = detecting_mirrorLine(self.image[y:y + h, x:x + w])
-								for m in range(len(self.frame)): 
-									try:
-										n = int((r-m*np.sin(theta))/np.cos(theta))
-										self.frame[m+y][n+x] = 255
-										self.frame[m+y][n+x+1] = 255
-									except IndexError:
-										continue
+								for m in range(h):
+									n = int((r-m*np.sin(theta))/np.cos(theta))
+									self.frame[m+y][n+x] = 255
+									self.frame[m+y][n+x+1] = 255
 							except Exception:
 								continue
+							for (ex, ey, ew, eh) in eyes[:2]:
+								cv2.rectangle(self.frame, (ex, ey), (ex+ew, ey+eh), (0,255,0), 2)
 				image = Image.fromarray(self.frame)
 				image = ImageTk.PhotoImage(image)
 

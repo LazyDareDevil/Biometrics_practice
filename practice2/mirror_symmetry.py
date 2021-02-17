@@ -52,7 +52,6 @@ def detecting_mirrorLine(picture, show_detail = False):
 class Mirror_Symmetry_detection:
     def __init__(self, image):
         self.image = image # convert the image into the array/matrix
-
         self.reflected_image = np.fliplr(self.image) # Flipped version of image 
         
         # find the keypoints and descriptors with SIFT
@@ -181,7 +180,7 @@ class Mirror_Symmetry_detection:
         plt.title(title)
         plt.show()
         
-def angle_with_x_axis(pi, pj):  # 公式在文件里解释
+def angle_with_x_axis(pi, pj):
     """
     calculate θij:
         the angle this line subtends with the x-axis.
