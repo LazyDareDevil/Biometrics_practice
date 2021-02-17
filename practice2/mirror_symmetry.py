@@ -1,9 +1,7 @@
 import sys
 import cv2
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
-import glob
 
 # create SIFT object ((a feature detection algorithm)) 
 sift = cv2.SIFT_create()

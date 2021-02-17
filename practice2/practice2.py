@@ -36,8 +36,8 @@ class PhotoBoothApp:
 		for each_item in m: 
 			self.list.insert("end", each_item) 
 
-		self.face_cascade = cv2.CascadeClassifier('haar/haarcascade_frontalface_default.xml')
-		self.eye_cascade = cv2.CascadeClassifier('haar/haarcascade_eye.xml')
+		self.face_cascade = cv2.CascadeClassifier(os.path.dirname(os.path.abspath(__file__)) + '/haar/haarcascade_frontalface_default.xml')
+		self.eye_cascade = cv2.CascadeClassifier(os.path.dirname(os.path.abspath(__file__)) + '/haar/haarcascade_eye.xml')
 
 		self.cap = cv2.VideoCapture(0)
 		self.template = None
@@ -68,21 +68,24 @@ class PhotoBoothApp:
 			while not self.stopEvent.is_set():
 				_, frame = self.cap.read()
 				self.frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-				self.image = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
+				self.image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 				self.method = self.list.curselection()
 				if len(self.method) > 0:
-					if self.method[0] >=0 and self.method[0] <6:
+					if self.method[0] < 6:
 						if self.temp_image is not None:
-							met = eval(self.methods[self.method[0]])
-							res = cv2.matchTemplate(self.image, self.temp_image, met)
-							_, _, min_loc, max_loc = cv2.minMaxLoc(res)
-							if met in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
-								top_left = min_loc
-							else:
-								top_left = max_loc
-							w, h = self.temp_image.shape
-							bottom_right = (top_left[0] + h, top_left[1] + w)
-							cv2.rectangle(self.frame, top_left, bottom_right, (255, 0, 0), 2)
+							try:
+								met = eval(self.methods[self.method[0]])
+								res = cv2.matchTemplate(self.image, self.temp_image, met)
+								_, _, min_loc, max_loc = cv2.minMaxLoc(res)
+								if met in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
+									top_left = min_loc
+								else:
+									top_left = max_loc
+								w, h = self.temp_image.shape
+								bottom_right = (top_left[0] + h, top_left[1] + w)
+								cv2.rectangle(self.frame, top_left, bottom_right, (255, 0, 0), 2)
+							except Exception:
+								continue
 					else:
 						faces = self.face_cascade.detectMultiScale(self.image, 1.3, 5)
 						for (x, y, w, h) in faces:
@@ -100,6 +103,7 @@ class PhotoBoothApp:
 								continue
 							for (ex, ey, ew, eh) in eyes[:2]:
 								cv2.rectangle(self.frame, (ex, ey), (ex+ew, ey+eh), (0,255,0), 2)
+						
 				image = Image.fromarray(self.frame)
 				image = ImageTk.PhotoImage(image)
 
@@ -112,15 +116,15 @@ class PhotoBoothApp:
 		ts = datetime.datetime.now()
 		filename = "{}.jpg".format(ts.strftime("%Y-%m-%d_%H-%M-%S"))
 		p = os.path.sep.join((self.outputPath, filename))
-		cv2.imwrite(p, self.frame.copy())
+		cv2.imwrite(p, cv2.cvtColor(self.frame.copy(), cv2.COLOR_RGB2BGR))
 		print("[INFO] saved {}".format(filename))
 
 	def addTemplate(self):
 		fl = filedialog.askopenfilename()
 		if "jpg" in fl or "jpeg" in fl or "png" in fl:
-			self.template = cv2.imread(fl)
+			self.template = cv2.cvtColor(cv2.imread(fl), cv2.COLOR_BGR2RGB)
 			self.temp_image = cv2.cvtColor(self.template, cv2.COLOR_BGR2GRAY)
-			image = Image.fromarray(self.temp_image)
+			image = Image.fromarray(self.template)
 			image = ImageTk.PhotoImage(image)
 
 			self.template_panel.configure(image=image)
