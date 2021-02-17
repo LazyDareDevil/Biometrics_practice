@@ -28,7 +28,8 @@ def mesh_data(features, targets):
 	indexes = rnd.sample(range(0, len(features)), len(features))
 	return [features[index] for index in indexes], [targets[index] for index in indexes]
 
-def split_data(data_faces, data_target, images_per_person = 10, images_per_person_in_train=7, images_per_person_in_test=3):
+def split_data(data_faces, data_target, images_per_person_in_train=7, images_per_person_in_test=3):
+	images_per_person = 10
 	images_all = len(data_faces)
 	if images_per_person_in_train > 9:
 		images_per_person_in_train = 9
@@ -48,7 +49,7 @@ def split_data(data_faces, data_target, images_per_person = 10, images_per_perso
 		y_test.extend(data_target[index] for index in indices_test)
 
 		indices_free = set(indices) - set(indices_train) - set(indices_test)
-		if len(indices_free > 0):
+		if len(indices_free) > 0:
 			x_free.extend(data_faces[index] for index in indices_free)
 			y_free.extend(data_target[index] for index in indices_free)
 
@@ -127,7 +128,9 @@ def cross_validation(data, method, folds=3):
 	x_test = []
 	y_train = []
 	y_test = []
+	results = []
 	for step in range(0, folds):
+		print("fold " + str(step))
 		if step == 0:
 			x_train = data[0][per_fold:]
 			x_test = data[0][:per_fold]
@@ -140,13 +143,30 @@ def cross_validation(data, method, folds=3):
 				y_train = data[1][:step*per_fold]
 				y_test = data[1][step*per_fold:]
 			else:
-				x_train = data[0][(step-1)*per_fold:step*per_fold].append(data[0][(step+1)*per_fold:])
+				x_train = data[0][:step*per_fold] + data[0][(step+1)*per_fold:]
 				x_test = data[0][step*per_fold:(step+1)*per_fold]
-				y_train = data[1][(step-1)*per_fold:step*per_fold].append(data[1][(step+1)*per_fold:])
+				y_train = data[1][:step*per_fold] + data[1][(step+1)*per_fold:]
 				y_test = data[1][step*per_fold:(step+1)*per_fold]
+		results.append(teach_parameter([x_train, y_train], [x_test, y_test], method))
+	res = results[0]
+	for element in results[1:]:
+		best = element[0]
+		stat = element[1]
+		res[0][0] += best[0]
+		res[0][1] += best[1]
+		for i in range(len(stat[1])):
+			res[1][1][i] += stat[1][i]
+	res[0][0] /= folds
+	res[0][1] /= folds
+	for i in range(len(res[1][1])):
+		res[1][1][i] /= folds
+	return res
 		
 
 images, targets = get_faces()
-x_train, x_test, y_train, y_test = split_data(images, targets)
-print(teach_parameter([x_train, y_train], [x_test, y_test], get_scale)[0])
+# x_train, x_test, y_train, y_test, _, _ = split_data(images, targets, images_per_person_in_train=5, images_per_person_in_test=4)
+# print(teach_parameter([x_train, y_train], [x_test, y_test], get_scale)[0])
 
+a = cross_validation([images, targets], get_histogram, 4)
+plt.plot(a[1][0], a[1][1])
+plt.show()

@@ -1,4 +1,3 @@
-from __future__ import print_function
 from PIL import Image, ImageTk
 import tkinter as tki
 from tkinter import filedialog
