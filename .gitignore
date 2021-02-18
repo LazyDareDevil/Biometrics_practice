@@ -132,4 +132,5 @@ practice2/data
 practice2/__pycache__
 practice3/data
 practice3/__pycache__
+practice3/test.py
 test.py

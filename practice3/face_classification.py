@@ -10,8 +10,8 @@ import cv2
 
 
 def get_histogram(image, param = 30):
-    hist, _ = np.histogram(image, bins=np.linspace(0, 1, param))
-    return hist
+    hist, bins = np.histogram(image, bins=np.linspace(0, 1, param))
+    return [hist, bins]
 
 def get_dft(image, mat_side = 13):
     f = np.fft.fft2(image)
@@ -60,11 +60,14 @@ def read_faces_from_disk():
 			data_target.append(i)
 	return [data_faces, data_target]
 
+def data_for_example(data):
+	return [data[0][2], data[0][4], data[0][17], data[0][34]]
+
 def mesh_data(data):
 	indexes = rnd.sample(range(0, len(data[0])), len(data[0]))
 	return [data[0][index] for index in indexes], [data[1][index] for index in indexes]
 
-def split_data(data, images_per_person_in_train=8, images_per_person_in_test=1):
+def split_data(data, images_per_person_in_train=5, images_per_person_in_test=1):
 	images_per_person = 10
 	images_all = len(data[0])
 	if images_per_person_in_train > 8:
@@ -72,7 +75,7 @@ def split_data(data, images_per_person_in_train=8, images_per_person_in_test=1):
 	if images_per_person_in_test > 9 - images_per_person_in_train:
 		images_per_person_in_test = 9 - images_per_person_in_train
 	
-	x_train, x_test, y_train, y_test, x_free, y_free = [], [], [], [], [], []
+	x_train, x_test, y_train, y_test = [], [], [], []
 
 	for i in range(0, images_all, images_per_person):
 		indices = list(range(i, i + images_per_person))
@@ -84,16 +87,11 @@ def split_data(data, images_per_person_in_train=8, images_per_person_in_test=1):
 		x_test.extend(data[0][index] for index in indices_test)
 		y_test.extend(data[1][index] for index in indices_test)
 
-		indices_free = set(indices) - set(indices_train) - set(indices_test)
-		if len(indices_free) > 0:
-			x_free.extend(data[0][index] for index in indices_free)
-			y_free.extend(data[1][index] for index in indices_free)
+	return x_train, x_test, y_train, y_test
 
-	return x_train, x_test, y_train, y_test, x_free, y_free
-
-def choose_images_for_control(data):
-	indices = rnd.sample(range(0, len(data[0])), 5)
-	return [data[0][index] for index in indices]
+def choose_n_from_data(data, number):
+	indexes = rnd.sample(range(0, len(data[0])), n)
+	return [data[0][index] for index in indexes], [data[1][index] for index in indexes]
 
 def create_feature(data, method, parameter):
 	result = []
@@ -102,7 +100,7 @@ def create_feature(data, method, parameter):
 	return result
 
 def distance(el1, el2):
-	return np.linalg.norm(el1 - el2)
+	return np.linalg.norm(np.array(el1) - np.array(el2))
 
 def classifier(data, new_elements, method, parameter):
 	if method not in [get_histogram, get_dft, get_dct, get_gradient, get_scale]:
@@ -142,7 +140,7 @@ def teach_parameter(data, test_elements, method):
 	if method == get_dft or method == get_dct:
 		param = (2, image_size, 1)
 	if method == get_gradient:
-		param = (2, int(image_size/2 - 1), 1)
+		param = (2, int(data[0][0].shape[0]/2 - 1), 1)
 	if method == get_scale:
 		param = (0.05, 1, 0.05)
 	
@@ -201,12 +199,3 @@ def cross_validation(data, method, folds=3):
 	for i in range(len(res[1][1])):
 		res[1][1][i] /= folds
 	return res
-		
-
-# images, targets = get_faces()
-# # x_train, x_test, y_train, y_test, _, _ = split_data(images, targets, images_per_person_in_train=5, images_per_person_in_test=4)
-# # print(teach_parameter([x_train, y_train], [x_test, y_test], get_scale)[0])
-
-# a = cross_validation([images, targets], get_histogram, 4)
-# plt.plot(a[1][0], a[1][1])
-# plt.show()
