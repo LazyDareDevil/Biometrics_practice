@@ -4,14 +4,50 @@ import matplotlib.pyplot as plt
 import random as rnd
 from sklearn.datasets import fetch_olivetti_faces
 import os
-from face_validation import get_dct, get_dft, get_gradient, get_scale, get_histogram
+from scipy.fftpack import dct
+from numpy import random
+import cv2
+
+
+def get_histogram(image, param = 30):
+    hist, _ = np.histogram(image, bins=np.linspace(0, 1, param))
+    return hist
+
+def get_dft(image, mat_side = 13):
+    f = np.fft.fft2(image)
+    f = f[0:mat_side, 0:mat_side]
+    return np.abs(f)
+
+def get_dct(image, mat_side = 13):
+    c = dct(image, axis=1)
+    c = dct(c, axis=0)
+    c = c[0:mat_side, 0:mat_side]
+    return c
+
+def get_gradient(image, n = 2):
+    shape = image.shape[0]
+    i, l = 0, 0
+    r = n
+    result = []
+
+    while r <= shape:
+        window = image[l:r, :]
+        result.append(np.sum(window))
+        i += 1
+        l = i * n
+        r = (i + 1) * n
+    result = np.array(result)
+    return result
+
+def get_scale(image, scale = 0.35):
+	h = image.shape[0]
+	w = image.shape[1]
+	new_size = (int(h * scale), int(w * scale))
+	return cv2.resize(image, new_size, interpolation = cv2.INTER_AREA)
 
 def get_faces():
 	data_images = fetch_olivetti_faces()
-	images = data_images.images
-	targets = data_images.target
-	indexes = rnd.sample(range(0, len(images)), len(images))
-	return [images[index] for index in indexes], [targets[index] for index in indexes]
+	return [data_images.images, data_images.target]
 
 def read_faces_from_disk():
 	data_faces = []
@@ -19,41 +55,45 @@ def read_faces_from_disk():
 	data_folder = os.path.dirname(os.path.abspath(__file__)) + "/faces/s"
 	for i in range(1, 41):
 		for j in range(1, 11):
-			data_faces.append(cv2.cvtColor(cv2.imread(data_folder + i + "/" + j + ".pgm"), cv2.COLOR_BGR2GRAY)/255)
+			image = cv2.cvtColor(cv2.imread(data_folder + str(i) + "/" + str(j) + ".pgm"), cv2.COLOR_BGR2GRAY)
+			data_faces.append(image/255)
 			data_target.append(i)
-	indexes = rnd.sample(range(0, len(data_faces)), len(data_faces))
-	return [data_faces[index] for index in indexes], [data_target[index] for index in indexes]
+	return [data_faces, data_target]
 
-def mesh_data(features, targets):
-	indexes = rnd.sample(range(0, len(features)), len(features))
-	return [features[index] for index in indexes], [targets[index] for index in indexes]
+def mesh_data(data):
+	indexes = rnd.sample(range(0, len(data[0])), len(data[0]))
+	return [data[0][index] for index in indexes], [data[1][index] for index in indexes]
 
-def split_data(data_faces, data_target, images_per_person_in_train=7, images_per_person_in_test=3):
+def split_data(data, images_per_person_in_train=8, images_per_person_in_test=1):
 	images_per_person = 10
-	images_all = len(data_faces)
-	if images_per_person_in_train > 9:
-		images_per_person_in_train = 9
-	if images_per_person_in_test > 10 - images_per_person_in_train:
-		images_per_person_in_test = 10 - images_per_person_in_train
+	images_all = len(data[0])
+	if images_per_person_in_train > 8:
+		images_per_person_in_train = 8
+	if images_per_person_in_test > 9 - images_per_person_in_train:
+		images_per_person_in_test = 9 - images_per_person_in_train
 	
 	x_train, x_test, y_train, y_test, x_free, y_free = [], [], [], [], [], []
 
 	for i in range(0, images_all, images_per_person):
 		indices = list(range(i, i + images_per_person))
 		indices_train = rnd.sample(indices, images_per_person_in_train)
-		x_train.extend(data_faces[index] for index in indices_train)
-		y_train.extend(data_target[index] for index in indices_train)
+		x_train.extend(data[0][index] for index in indices_train)
+		y_train.extend(data[1][index] for index in indices_train)
 
 		indices_test = rnd.sample(set(indices) - set(indices_train), images_per_person_in_test)
-		x_test.extend(data_faces[index] for index in indices_test)
-		y_test.extend(data_target[index] for index in indices_test)
+		x_test.extend(data[0][index] for index in indices_test)
+		y_test.extend(data[1][index] for index in indices_test)
 
 		indices_free = set(indices) - set(indices_train) - set(indices_test)
 		if len(indices_free) > 0:
-			x_free.extend(data_faces[index] for index in indices_free)
-			y_free.extend(data_target[index] for index in indices_free)
+			x_free.extend(data[0][index] for index in indices_free)
+			y_free.extend(data[1][index] for index in indices_free)
 
 	return x_train, x_test, y_train, y_test, x_free, y_free
+
+def choose_images_for_control(data):
+	indices = rnd.sample(range(0, len(data[0])), 5)
+	return [data[0][index] for index in indices]
 
 def create_feature(data, method, parameter):
 	result = []
@@ -163,10 +203,10 @@ def cross_validation(data, method, folds=3):
 	return res
 		
 
-images, targets = get_faces()
-# x_train, x_test, y_train, y_test, _, _ = split_data(images, targets, images_per_person_in_train=5, images_per_person_in_test=4)
-# print(teach_parameter([x_train, y_train], [x_test, y_test], get_scale)[0])
+# images, targets = get_faces()
+# # x_train, x_test, y_train, y_test, _, _ = split_data(images, targets, images_per_person_in_train=5, images_per_person_in_test=4)
+# # print(teach_parameter([x_train, y_train], [x_test, y_test], get_scale)[0])
 
-a = cross_validation([images, targets], get_histogram, 4)
-plt.plot(a[1][0], a[1][1])
-plt.show()
+# a = cross_validation([images, targets], get_histogram, 4)
+# plt.plot(a[1][0], a[1][1])
+# plt.show()
