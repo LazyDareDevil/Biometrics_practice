@@ -18,17 +18,19 @@ class PhotoBoothApp:
 		self.thread = None
 		self.stopEvent = None
 		self.root = tki.Tk()
+		self.canvas = tki.Canvas(self.root)
 		self.root.title("Paractice 3. Face classificator")
 		self.root.protocol("WM_DELETE_WINDOW", self.onClose)
 		self.root.bind('<Escape>', lambda e: self.root.quit())
 		self.root.geometry("1350x700+50+50")
 		self.root.resizable(False, False)
+		self.canvas.grid(row=0, column=0)
 		
-		self.frame_settings = tki.Frame(self.root, bg='peach puff', height=100)
+		self.frame_settings = tki.Frame(self.canvas, bg='peach puff', height=100, width=1350)
 		self.frame_settings.grid(row=0)
-		self.frame_example = tki.Frame(self.root, height=200, width=1350)
+		self.frame_example = tki.Frame(self.canvas, height=200, width=1350)
 		self.frame_example.grid(row=1, sticky = 'N')
-		self.frame_stats = tki.Frame(self.root)
+		self.frame_stats = tki.Frame(self.canvas, width=1350)
 		self.frame_stats.grid(row=2)
 		
 		lbl1 = tki.Label(self.frame_settings, text="Step 1. Choose dataset")
@@ -98,24 +100,24 @@ class PhotoBoothApp:
 
 		lbl10 = tki.Label(self.frame_settings, text="Best parameter")
 		lbl10.grid(row=1, column=7, padx = 25, pady = 8, sticky='N')
-		self.label_parameter = tki.Label(self.frame_settings, text="0")
-		self.label_parameter.grid(row=1, column=7, padx = 25, pady = 8, sticky='NE')
+		self.label_parameter = tki.Label(self.frame_settings, text="")
+		self.label_parameter.grid(row=1, column=8, pady = 8, sticky='NW')
 
 		lbl11 = tki.Label(self.frame_settings, text="Best score")
-		lbl11.grid(row=1, column=7, padx = 25, pady = 30, sticky='N')
-		self.label_score = tki.Label(self.frame_settings, text="0")
-		self.label_score.grid(row=1, column=7, padx = 25, pady = 30, sticky='NE')
+		lbl11.grid(row=2, column=7, padx = 25, sticky='N')
+		self.label_score = tki.Label(self.frame_settings, text="")
+		self.label_score.grid(row=2, column=8, sticky='NW')
 
 		lbl12 = tki.Label(self.frame_settings, text="Best num folds")
-		lbl12.grid(row=1, column=7, padx = 25, pady = 50, sticky='N')
-		self.label_folds = tki.Label(self.frame_settings, text="0")
-		self.label_folds.grid(row=1, column=7, padx = 25, pady = 50, sticky='NE')
+		lbl12.grid(row=3, column=7, padx = 25, sticky='N')
+		self.label_folds = tki.Label(self.frame_settings, text="")
+		self.label_folds.grid(row=3, column=8, sticky='NW')
 
 		lbl6 = tki.Label(self.frame_example, text="Feature example:")
-		lbl6.grid(row=0, column=0, padx = 20, sticky='NW')	
+		lbl6.grid(row=0, column=0, padx = 10, sticky='NW')	
 
 		lbl7 = tki.Label(self.frame_stats, text="Test data computing stats:")
-		lbl7.grid(row=0, column=0, padx = 20, sticky='NW')
+		lbl7.grid(row=0, column=0, padx = 10, sticky='NW')
 
 		self.data = None
 		self.number_face_test = [10, 200]
@@ -125,14 +127,22 @@ class PhotoBoothApp:
 		
 		self.images = [tki.Label(self.frame_example), tki.Label(self.frame_example), tki.Label(self.frame_example), tki.Label(self.frame_example)]
 		for i in range(len(self.images)):
-			self.images[i].grid(row = 1, column = i+1, sticky='N', padx=10, pady=8)
+			self.images[i].grid(row = 0, column = i+1, sticky='N', padx=10, pady=2)
 		self.features = [tki.Label(self.frame_example), tki.Label(self.frame_example), tki.Label(self.frame_example), tki.Label(self.frame_example)]
 		for i in range(len(self.images)):
-			self.features[i].grid(row = 2, column = i+1, sticky='N', padx=10, pady=8)
+			self.features[i].grid(row = 1, column = i+1, sticky='N', padx=10, pady=2)
 
+		lll1 = tki.Label(self.frame_stats, text="train with 3 folds")
+		lll1.grid(row=0, column=1, padx = 10)
+		lll2 = tki.Label(self.frame_stats, text="train with 5 folds")
+		lll2.grid(row=0, column=2, padx = 10)
+		lll3 = tki.Label(self.frame_stats, text="train with 7 folds")
+		lll3.grid(row=0, column=3, padx = 10)
+		lll4 = tki.Label(self.frame_stats, text="test with best parameter and different test sizes")
+		lll4.grid(row=0, column=4, padx = 10)
 		self.stats = [tki.Label(self.frame_stats), tki.Label(self.frame_stats), tki.Label(self.frame_stats), tki.Label(self.frame_stats)]
 		for i in range(len(self.stats)):
-			self.stats[i].grid(row = 2, column = i+1, sticky='N', padx=10, pady=8)
+			self.stats[i].grid(row = 1, column = i+1, sticky='N', padx=10)
 	
 	def load_data(self):
 		try:
@@ -291,7 +301,8 @@ class PhotoBoothApp:
 			res = cross_validation(train, self.method, folds=f)
 			if res[0][1] > results[1]:
 				results = [res[0][0], res[0][1], f]
-			fig = plt.figure(figsize=(4, 4))
+			plt.rcParams["font.size"] = "5"
+			fig = plt.figure(figsize=(2.5, 2))
 			ax = fig.add_subplot(111)
 			ax.plot(res[1][0], res[1][1])
 			buf = io.BytesIO()
@@ -299,8 +310,8 @@ class PhotoBoothApp:
 			buf.seek(0)
 			image = Image.open(buf)
 			image = ImageTk.PhotoImage(image)
-			self.features[count].configure(image=image)
-			self.features[count].image = image
+			self.stats[count].configure(image=image)
+			self.stats[count].image = image
 			count += 1
 		
 		self.label_parameter.configure(text = str(results[0]))
@@ -310,8 +321,9 @@ class PhotoBoothApp:
 		sizes = range(int(self.number_face_test[0]), int(self.number_face_test[1]), 10)
 		test_results = [sizes, []]
 		for size in sizes:
-			test_results[1].append(test_classifier([x_train, y_train], choose_n_from_data([x_test, y_test], size), self.method, results[0]))
-		fig = plt.figure(figsize=(4, 4))
+			test_results[1].append(test_classifier(train, choose_n_from_data(test, size), self.method, results[0]))
+		plt.rcParams["font.size"] = "5"
+		fig = plt.figure(figsize=(2.5, 2))
 		ax = fig.add_subplot(111)
 		ax.plot(test_results[0], test_results[1])
 		buf = io.BytesIO()
@@ -319,8 +331,8 @@ class PhotoBoothApp:
 		buf.seek(0)
 		image = Image.open(buf)
 		image = ImageTk.PhotoImage(image)
-		self.features[count].configure(image=image)
-		self.features[count].image = image
+		self.stats[count].configure(image=image)
+		self.stats[count].image = image
 
 	def onClose(self):
 		print("[INFO] closing...")

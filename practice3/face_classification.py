@@ -72,8 +72,8 @@ def split_data(data, images_per_person_in_train=5, images_per_person_in_test=1):
 	images_all = len(data[0])
 	if images_per_person_in_train > 8:
 		images_per_person_in_train = 8
-	if images_per_person_in_test > 9 - images_per_person_in_train:
-		images_per_person_in_test = 9 - images_per_person_in_train
+	if images_per_person_in_test > 10 - images_per_person_in_train:
+		images_per_person_in_test = 10 - images_per_person_in_train
 	
 	x_train, x_test, y_train, y_test = [], [], [], []
 
@@ -86,17 +86,20 @@ def split_data(data, images_per_person_in_train=5, images_per_person_in_test=1):
 		indices_test = rnd.sample(set(indices) - set(indices_train), images_per_person_in_test)
 		x_test.extend(data[0][index] for index in indices_test)
 		y_test.extend(data[1][index] for index in indices_test)
-
+	
 	return x_train, x_test, y_train, y_test
 
 def choose_n_from_data(data, number):
-	indexes = rnd.sample(range(0, len(data[0])), n)
+	indexes = rnd.sample(range(0, len(data[0])), number)
 	return [data[0][index] for index in indexes], [data[1][index] for index in indexes]
 
 def create_feature(data, method, parameter):
 	result = []
 	for element in data:
-		result.append(method(element, parameter))
+		if method == get_histogram:
+			result.append(method(element, parameter)[0])
+		else:
+			result.append(method(element, parameter))
 	return result
 
 def distance(el1, el2):
@@ -195,6 +198,8 @@ def cross_validation(data, method, folds=3):
 		for i in range(len(stat[1])):
 			res[1][1][i] += stat[1][i]
 	res[0][0] /= folds
+	if method != get_scale:
+		res[0][0] = int(res[0][0])
 	res[0][1] /= folds
 	for i in range(len(res[1][1])):
 		res[1][1][i] /= folds
