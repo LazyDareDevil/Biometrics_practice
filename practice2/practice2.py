@@ -8,7 +8,6 @@ import imutils
 import cv2
 import os
 import sys
-from mirror_symmetry import detecting_mirrorLine
 import numpy as np
 
 class PhotoBoothApp:
@@ -88,20 +87,16 @@ class PhotoBoothApp:
 					else:
 						faces = self.face_cascade.detectMultiScale(self.image, 1.3, 5)
 						for (x, y, w, h) in faces:
-							self.frame = cv2.rectangle(self.frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+							borders = int(w/10)
+							# cv2.imwrite("practice2/data/face.jpg", cv2.cvtColor(self.image[y:y+h, x+borders:x+w-borders], cv2.COLOR_GRAY2BGR))
+							c, l, r = self.face_symmetry(self.image[y:y+h, x+borders:x+w-borders])
+							self.frame = cv2.rectangle(self.frame, (x+borders, y), (x + w-borders, y + h), (255, 0, 0), 2)
+							self.frame = cv2.line(self.frame, (x+borders+c, y), (x+borders+c, y+h), (255,255,255), 2) 
+							self.frame = cv2.line(self.frame, (x+borders+l, y + int(h/4)), (x+borders+l, y + int(3*h/4)), (255,255,255), 2) 
+							self.frame = cv2.line(self.frame, (x+borders+r, y + int(h/4)), (x+borders+r, y + int(3*h/4)), (255,255,255), 2) 
 							eyes = self.eye_cascade.detectMultiScale(self.image)
-							try:
-								cv2.imwrite("data/face.jpg", self.image[y:y + h, x:x + w])
-								# print(x, " ", x+ w, " ", y, " ", y + h)
-								r, theta = detecting_mirrorLine(self.image[y:y + h, x:x + w])
-								for m in range(h):
-									n = int((r-m*np.sin(theta))/np.cos(theta))
-									self.frame[m+y][n+x] = 255
-									self.frame[m+y][n+x+1] = 255
-							except Exception:
-								continue
 							for (ex, ey, ew, eh) in eyes[:2]:
-								cv2.rectangle(self.frame, (ex, ey), (ex+ew, ey+eh), (0,255,0), 2)
+								self.frame = cv2.rectangle(self.frame, (ex, ey), (ex+ew, ey+eh), (0,255,0), 2)
 						
 				image = Image.fromarray(self.frame)
 				image = ImageTk.PhotoImage(image)
@@ -130,6 +125,43 @@ class PhotoBoothApp:
 			self.template_panel.image = image
 		else:
 			print("[INFO] didn't opened file")
+
+	def face_symmetry(self, face_cropped):
+		size = face_cropped.shape
+		w = int(size[1]/10)
+		if w < 3:
+			w = 3
+		line = w
+		best_central = [w, 1000000]
+		while line < size[1] - w:
+			tmp = 0
+			for i in range(1, w+1):
+				for j in range(size[0]):
+					tmp += np.abs(int(face_cropped[j][line-i]) - int(face_cropped[j][line+i]))
+			if tmp < best_central[1]:
+				best_central = [line, tmp]
+			line += 2
+		w1 = int(w/2)
+		if w1 < 3:
+			w1 = 3
+		best_left = [w1, 1000000]
+		best_right = [best_central[0] + w1, 1000000]
+		line1 = w1
+		line2 = best_central[0] + w1
+		while line1 < best_central[0] - w1 and line2 < size[1] - w1:
+			tmp1 = 0
+			tmp2 = 0
+			for i in range(1, w1+1):
+				for j in range(int(size[0]/4), int(3*size[0]/4)):
+					tmp1 += np.abs(int(face_cropped[j][line1-i]) - int(face_cropped[j][line1+i]))
+					tmp2 += np.abs(int(face_cropped[j][line2-i]) - int(face_cropped[j][line2+i]))
+			if tmp1 < best_left[1]:
+				best_left = [line1, tmp1]
+			if tmp2 < best_right[1]:
+				best_right = [line2, tmp2]
+			line1 += 2
+			line2 += 2
+		return best_central[0], best_left[0], best_right[0]
 	
 	def onClose(self):
 		print("[INFO] closing...")
