@@ -75,7 +75,7 @@ class PhotoBoothApp:
 		self.label_method = tki.Label(self.frame_settings, text="")
 		self.label_method.grid(row=3, column=4, padx = 25, pady = 2)
 
-		lbl2 = tki.Label(self.frame_settings, text="Step 4.")
+		lbl2 = tki.Label(self.frame_settings, text="Step 4. Feature example")
 		lbl2.grid(row=0, column=5, padx = 25, pady = 10)
 
 		l3 = tki.Label(self.frame_settings, text="Input parameter for feature")
@@ -98,10 +98,13 @@ class PhotoBoothApp:
 		lbl9 = tki.Label(self.frame_settings, text="Best results for train")
 		lbl9.grid(row=0, column=7, padx = 25, pady = 8, sticky='N')
 
+		self.label_now_method = tki.Label(self.frame_settings, text="")
+		self.label_now_method.grid(row=1, column=7, pady = 8, sticky='NW')
+
 		lbl10 = tki.Label(self.frame_settings, text="Best parameter")
-		lbl10.grid(row=1, column=7, padx = 25, pady = 8, sticky='N')
+		lbl10.grid(row=1, column=7, padx = 25, pady = 30, sticky='N')
 		self.label_parameter = tki.Label(self.frame_settings, text="")
-		self.label_parameter.grid(row=1, column=8, pady = 8, sticky='NW')
+		self.label_parameter.grid(row=1, column=8, pady = 30, sticky='NW')
 
 		lbl11 = tki.Label(self.frame_settings, text="Best score")
 		lbl11.grid(row=2, column=7, padx = 25, sticky='N')
@@ -254,7 +257,7 @@ class PhotoBoothApp:
 				self.features[i].configure(image=image)
 				self.features[i].image = image
 			if self.method == get_scale:
-				image = Image.fromarray(self.examples[1][i]*255)
+				image = Image.fromarray(cv2.resize(self.examples[1][i]*255, self.examples[0][i].shape, interpolation = cv2.INTER_AREA))
 				image = ImageTk.PhotoImage(image)
 				self.features[i].configure(image=image)
 				self.features[i].image = image
@@ -314,6 +317,7 @@ class PhotoBoothApp:
 			self.stats[count].image = image
 			count += 1
 		
+		self.label_now_method.configure(text = str(self.method.__name__[4:]))
 		self.label_parameter.configure(text = str(results[0]))
 		self.label_score.configure(text = str(results[1]))
 		self.label_folds.configure(text = str(results[2]))
