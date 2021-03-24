@@ -244,7 +244,7 @@ class PhotoBoothApp:
 		self.images_1[5].configure(image=image)
 		self.images_1[5].image = image
 
-		image = Image.fromarray(self.data[0][10*(v[indexes[0]]-1)]*255)
+		image = Image.fromarray(self.data[0][10*v[indexes[0]]]*255)
 		image = ImageTk.PhotoImage(image)
 		self.images_1[6].configure(image=image)
 		self.images_1[6].image = image
@@ -322,7 +322,7 @@ class PhotoBoothApp:
 		self.images_2[5].configure(image=image)
 		self.images_2[5].image = image
 
-		image = Image.fromarray(self.data[0][10*(v[indexes[1]]-1)]*255)
+		image = Image.fromarray(self.data[0][10*v[indexes[1]]]*255)
 		image = ImageTk.PhotoImage(image)
 		self.images_2[6].configure(image=image)
 		self.images_2[6].image = image
@@ -400,7 +400,7 @@ class PhotoBoothApp:
 		self.images_3[5].configure(image=image)
 		self.images_3[5].image = image
 
-		image = Image.fromarray(self.data[0][10*(v[indexes[2]]-1)]*255)
+		image = Image.fromarray(self.data[0][10*v[indexes[2]]]*255)
 		image = ImageTk.PhotoImage(image)
 		self.images_3[6].configure(image=image)
 		self.images_3[6].image = image

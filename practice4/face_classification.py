@@ -57,7 +57,7 @@ def read_faces_from_disk():
 		for j in range(1, 11):
 			image = cv2.cvtColor(cv2.imread(data_folder + str(i) + "/" + str(j) + ".pgm"), cv2.COLOR_BGR2GRAY)
 			data_faces.append(image/255)
-			data_target.append(i)
+			data_target.append(i-1)
 	return [data_faces, data_target]
 
 def split_data(data, images_per_person_in_train=5):
